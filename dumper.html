@@ -1,0 +1,91 @@
+<html>
+  <head>
+    <title>Dumper - Leap</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="leap.js"></script>
+    <script>
+      var photo_urls = [];
+      $(document).ready( function() {
+          "use strict";
+          var flickrUrl = "http://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=b79e04695daa59d2645f77b9ad08e2c1&tags=ncsu&extras=views%2Curl_m&per_page=20&format=json&nojsoncallback=1";
+    
+          $.getJSON( flickrUrl, function(data) {
+              var photos = data.photos.photo;
+              $.each( photos, function(index, photo){
+                  //$("#picsJSON").append(photo.url_m + "<br/>");    
+                  photo_urls.push(photo.url_m);
+              });
+              alert(photo_urls.toString());
+          });        
+      });
+
+      var pausedFrame = null;
+      var latestFrame = null;
+      window.onkeypress = function(e) {
+        if (e.charCode == 32) {
+          if (pausedFrame == null) {
+            pausedFrame = latestFrame;
+          } else {
+            pausedFrame = null;
+          }
+        }
+      };
+
+      var controller = new Leap.Controller({enableGestures: true});
+      var photo_url_index = 0;
+      controller.loop(function(frame) {
+        latestFrame = frame;
+        //document.getElementById('out').innerHTML = (pausedFrame ? "<p><b>PAUSED</b></p>" : "") + "<div>"+(pausedFrame || latestFrame).dump()+"</div>";
+        if(latestFrame.gestures !== undefined && latestFrame.gestures.length > 0) {
+          var gesture = latestFrame.gestures[0];
+          if(gesture.type === "swipe") {
+              if(gesture.state === "stop") {
+
+                 if (gesture.direction[0] > gesture.direction[2]) {
+                    console.log('swipe left');
+                    photo_url_index = (photo_url_index + 1) % photo_urls.length;
+                    $("#flickrPic").attr("src",photo_urls[photo_url_index]);
+                 }
+                 else if(gesture.direction[0] < gesture.direction[2]) {
+                    console.log("swipe right");
+                    photo_url_index = photo_url_index == 0 ? photo_urls.length - 1 : (photo_url_index - 1) % photo_urls.length;
+                    $("#flickrPic").attr("src",photo_urls[photo_url_index]);
+                 }                
+              }
+          }  
+        }
+        
+      });
+      controller.on('ready', function() {
+          console.log("ready");
+      });
+      controller.on('connect', function() {
+          console.log("connect");
+      });
+      controller.on('disconnect', function() {
+          console.log("disconnect");
+      });
+      controller.on('focus', function() {
+          console.log("focus");
+      });
+      controller.on('blur', function() {
+          console.log("blur");
+      });
+      controller.on('deviceConnected', function() {
+          console.log("deviceConnected");
+      });
+      controller.on('deviceDisconnected', function() {
+          console.log("deviceDisconnected");
+      });
+
+      (function(){
+          
+      });
+    </script>
+  </head>
+  <body>
+    <div id="out"></div>
+    <div id="log"></div>
+    <div id="flickrPicHolder"><img id="flickrPic"></div>
+  </body>
+</html>
